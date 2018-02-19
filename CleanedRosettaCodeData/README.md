@@ -26,4 +26,3 @@ This will use the library's split_functions functionality to print out a list of
 
 # Further Notes
 This library has been customized for use in cheating detection applications. It should be pretty simple to un-customize it.
-# seq2seqcodetranslation
