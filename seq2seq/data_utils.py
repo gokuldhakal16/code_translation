@@ -26,39 +26,17 @@ import tarfile
 from io import StringIO
 import tokenize
 import utils.analyze as structurer
-from cplustokenizer import Tokenizer
-import javatokenizer
+from tokenizer import javatokenizer
 
 from six.moves import urllib
 
 from tensorflow.python.platform import gfile
-
-# Special vocabulary symbols - we always put them at the start.
-_PAD = b"_PAD"
-_GO = b"_GO"
-_EOS = b"_EOS"
-_UNK = b"_UNK"
-_START_VOCAB = [_PAD, _GO, _EOS, _UNK]
-
-PAD_ID = 0
-GO_ID = 1
-EOS_ID = 2
-UNK_ID = 3
-
-# Regular expressions used to tokenize.
-_DIGIT_RE = re.compile(br"\d")
 
 cplusdirectory = "../CleanedRosettaCodeData/C++"
 javadirectory = "../CleanedRosettaCodeData/Java"
 
 
 # Generate tokens for any .cpp file
-def cplus_tokenizer(filename):
-  words = []
-  tok = Tokenizer(filename)
-  entire_token_stream = tok.full_tokenize()
-  words.extend(entire_token_stream)
-  return words
 
 # Generate tokens for any .java file
 def java_tokenizer(filename):
@@ -66,45 +44,6 @@ def java_tokenizer(filename):
     data=myfile.read()
     tokens = list(javatokenizer.tokenize(data))
     return tokens
-
-
-def create_vocabulary(vocabulary_path, data_path, max_vocabulary_size,
-                      tokenizer=None, normalize_digits=True):
-  """Create vocabulary file (if it does not exist yet) from data file.
-
-  Each sentence is tokenized and digits are normalized (if normalize_digits is set).
-  Vocabulary contains the most-frequent tokens up to max_vocabulary_size.
-  We write it to vocabulary_path in a one-token-per-line format, so that later
-  token in the first line gets id=0, second line gets id=1, and so on.
-
-  Args:
-    vocabulary_path: path where the vocabulary will be created.
-    data_path: data file that will be used to create vocabulary.
-    max_vocabulary_size: limit on the size of the created vocabulary.
-    tokenizer: a function to use to tokenize each data sentence;
-      if None, basic_tokenizer will be used.
-    normalize_digits: Boolean; if true, all digits are replaced by 0s.
-  """
-  if not gfile.Exists(vocabulary_path):
-    print("Creating vocabulary %s from data %s" % (vocabulary_path, data_path))
-
-    vocab = {}
-    with gfile.GFile(data_path, mode="rb") as f:
-      while True:
-        tokens = tokenizer(file) if tokenizer else cplus_tokenizer(file)
-        for w in tokens:
-          word = re.sub(_DIGIT_RE, b"0", w) if normalize_digits else w
-          if word in vocab:
-            vocab[word] += 1
-          else:
-            vocab[word] = 1
-      vocab_list = _START_VOCAB + sorted(vocab, key=vocab.get, reverse=True)
-      if len(vocab_list) > max_vocabulary_size:
-        vocab_list = vocab_list[:max_vocabulary_size]
-      with gfile.GFile(vocabulary_path, mode="wb") as vocab_file:
-        for w in vocab_list:
-          vocab_file.write(w + b"\n")
-
 
 def initialize_vocabulary(vocabulary_path):
   """Initialize vocabulary from file.
@@ -158,7 +97,7 @@ def file_to_token_ids(file, vocabulary,
   if tokenizer:
     words = tokenizer(file)
   else:
-    words = cplus_tokenizer(file)
+    words = java_tokenizer(file)
   if not normalize_digits:
     return [vocabulary.get(w, UNK_ID) for w in words]
   # Normalize digits by 0 before looking words up in the vocabulary.
@@ -186,7 +125,7 @@ def data_to_token_ids(data_path, target_path, vocabulary_path,
     vocab, _ = initialize_vocabulary(vocabulary_path)
     with gfile.GFile(data_path, mode="rb") as data_file:
       with gfile.GFile(target_path, mode="w") as tokens_file:
-        if data_file.exists():
+        while True:
           token_ids = file_to_token_ids(tokens_file, vocab, tokenizer,
                                             normalize_digits)
           tokens_file.write(" ".join([str(tok) for tok in token_ids]) + "\n")
@@ -212,20 +151,9 @@ def prepare_data(data_dir, code_vocabulary_size, en_vocabulary_size, tokenizer=N
       (6) path to the English vocabulary file.
     """
 
-    # tokenizer = python_tokenizer
-
-    # print (tokenizer)
-
     # Specify the data directories.
     train_path = data_dir + "train/90pt.random"
     dev_path = data_dir + "dev/10pt.random"
-
-    # Create vocabularies of the appropriate sizes.
-    en_vocab_path = os.path.join(data_dir, "vocab%d.en" % en_vocabulary_size)
-    code_vocab_path = os.path.join(data_dir, "vocab%d.code" % code_vocabulary_size)
-    create_vocabulary(en_vocab_path, train_path + ".en", en_vocabulary_size, tokenizer)
-    # create_vocabulary(code_vocab_path, train_path + ".code", code_vocabulary_size, python_tokenizer)
-    create_vocabulary(code_vocab_path, train_path + ".code", code_vocabulary_size, tokenizer)
 
     # Create token ids for the training data.
     en_train_ids_path = train_path + (".ids%d.en" % en_vocabulary_size)
@@ -242,5 +170,4 @@ def prepare_data(data_dir, code_vocabulary_size, en_vocabulary_size, tokenizer=N
     data_to_token_ids(dev_path + ".code", code_dev_ids_path, code_vocab_path, tokenizer)
     
     return (code_train_ids_path, en_train_ids_path,
-        code_dev_ids_path, en_dev_ids_path,
-        code_vocab_path, en_vocab_path)
+        code_dev_ids_path, en_dev_ids_path)
