@@ -22,8 +22,8 @@ Annotation
 HexInteger
 [BasicType
 [Separator
-[String
-DecimalInteger]
-Identifier]
 BinaryInteger
+Identifier]
+[String
 []
+DecimalInteger]
