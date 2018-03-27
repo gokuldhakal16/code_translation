@@ -25,16 +25,11 @@ import re
 import tarfile
 from io import StringIO
 import tokenize
-import utils.analyze as structurer
 import tensorflow as tf
 
 from six.moves import urllib
 
 from tensorflow.python.platform import gfile
-
-from tokenizer import javatokenizer
-from tokenizer.cplustokenizer import Tokenizer
-
 
 # Special vocabulary symbols - we always put them at the start.
 _PAD = b"_PAD"
@@ -55,57 +50,12 @@ _DIGIT_RE = re.compile(br"\d")
 
 
 def basic_tokenizer(sentence):
+    sentence = sentence.encode()
     """Very basic tokenizer: split the sentence into a list of tokens."""
     words = []
     for space_separated_fragment in sentence.strip().split():
         words.extend(re.split(_WORD_SPLIT, space_separated_fragment))
     return [w for w in words if w]
-
-# Generate tokens for any .java file
-def java_tokenizer(filename):
-  with open(filename,'r') as javafile:
-    data=javafile.read()
-    tokens = list(javatokenizer.tokenize(data))
-    return tokens
-
-# Generate tokens for any .cpp file
-def cplus_tokenizer(filename):
-  words = []
-  tok = Tokenizer(filename)
-  entire_token_stream = tok.full_tokenize()
-  words.extend(entire_token_stream)
-  return words
-
-
-# def python_tokenizer(sentence):
-    # """ Call python tokenizer """
-
-    # sentence = sentence.strip()
-    # buf = StringIO.StringIO(sentence)
-    # token_list = []
-    # for token in tokenize.generate_tokens(buf.readline):
-        # token_list.append(token[1])
-
-  #  print (get_structure(token_list))
-
-    # return get_structure(token_list)
-     
-
-
-# def get_structure(token_list):
-    # new_token_list = []
-
-    # for token in token_list:
-        # new_token_list.append(token)
-        # new_token_list.append(structurer.getType(token))
-        
-    # for token in new_token_list
-        # new_token_list.append(structurer.getType(token))
-
-    # print (new_token_list)
-    # sys.exit(0)
-
-    # return new_token_list
 
 
 def create_vocabulary(vocabulary_path, data_path, max_vocabulary_size,
@@ -182,9 +132,6 @@ def initialize_vocabulary(vocabulary_path):
 
 def sentence_to_token_ids(sentence, vocabulary,
                           tokenizer=None, normalize_digits=True):
-  sentence = tf.compat.as_bytes(sentence) 
-
-
   """Convert a string to list of integers representing token-ids.
 
   For example, a sentence "I have a dog" may become tokenized into
