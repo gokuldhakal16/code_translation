@@ -14,7 +14,7 @@ class JavaToken(object):
         self.javadoc = javadoc
 
     def __repr__(self):
-        if(self.__class__.__name__== 'Ident'):
+        if(self.__class__.__name__ in ["Ident", "String"]):
             return '%s' % (self.__class__.__name__)
 
         elif(self.__class__.__name__ in ["Integer","DecimalInteger","OctalInteger","HexInteger","BinaryInteger","FloatingPoint","DecimalFloatingPoint","HexFloatingPoint"]):
