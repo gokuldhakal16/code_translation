@@ -3,6 +3,7 @@
 Created on Mon Mar 30 08:37:12 2015
 
 @author: jonathan
+@Edited: Gokul Dhakal
 """
 
 from ctypes.util import find_library
@@ -19,6 +20,9 @@ class Tokenizer:
         self.index = clang.cindex.Index.create()
         self.tu = self.index.parse(path)
         self.path = self.extract_path(path)
+        '''print(self.index)
+        print(self.tu)
+        print("path = ",self.path)'''
     
     # To output for split_functions, must have same path up to last two folders
     def extract_path(self, path):
@@ -55,8 +59,9 @@ class Tokenizer:
         spelling = punctuation.spelling
         
         # ignore certain characters
-        if spelling in ["{", "}","(",")",";"]:
+        if spelling in ["{", "}","(",")"]:
             return None
+
             
         return [spelling]
     
@@ -92,7 +97,7 @@ class Tokenizer:
             if token.kind.name == "COMMENT":
                 # ignore all comments
                 continue
-    
+
             if token.kind.name == "PUNCTUATION":
                 punct_or_none = self.process_puntuation(token)
                 
@@ -113,7 +118,7 @@ class Tokenizer:
             if token.kind.name == "KEYWORD":
                 result += [token.spelling]
     
-        return result
+        return " ".join(result)
     
     # tokenizes the entire document
     def full_tokenize(self):
@@ -122,7 +127,7 @@ class Tokenizer:
     
     # returns a list of function name / function / filename tuples
     def split_functions(self, method_only):
-        results = []
+        results = ''
         cursor_kind = clang.cindex.CursorKind
         
         # query all children for methods, and then tokenize each
@@ -134,8 +139,11 @@ class Tokenizer:
             if (c.kind == cursor_kind.CXX_METHOD or (method_only == False and c.kind == cursor_kind.FUNCTION_DECL)) and extracted_path == self.path:
                 name = c.spelling
                 tokens = self.full_tokenize_cursor(c)
+                tokens1 = " ".join(tokens)
                 filename = filename.split("/")[-1]
-                results += [(name,tokens,filename)]
+                #results += [(name,tokens,filename)]
+                results += tokens1
+
                 
         return results
 
@@ -168,9 +176,7 @@ if __name__ == "__main__":
         exit(1)
         
     tok = Tokenizer(sys.argv[1]) # path to a C++ file
-    results = tok.split_functions(False)
-    for res in results:
-        print(res[0] + " (" + res[2] + "):")
-        print("Tokens: {}".format(res[1]))
-        #print("Compressed Tokens: {}".format(compress_tokens(res[1])))
-        print("")
+    results = tok.full_tokenize()
+    print(results)
+
+    

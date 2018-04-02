@@ -16,7 +16,7 @@ for f in os.listdir(dirname):
     	indtoken = dirnameone+indfiles
 
     	tok = Tokenizer(indtoken)
-    	entire_token_stream = tok.split_functions(False)
+    	entire_token_stream = tok.full_tokenize()
 
 
     	print(entire_token_stream)

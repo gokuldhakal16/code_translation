@@ -50,7 +50,7 @@ _DIGIT_RE = re.compile(br"\d")
 
 
 def basic_tokenizer(sentence):
-    sentence = sentence.encode()
+ 
     """Very basic tokenizer: split the sentence into a list of tokens."""
     words = []
     for space_separated_fragment in sentence.strip().split():

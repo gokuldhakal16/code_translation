@@ -14,12 +14,7 @@ class JavaToken(object):
         self.javadoc = javadoc
 
     def __repr__(self):
-        if self.position:
-            return '%s "%s" line %d, position %d' % (
-                self.__class__.__name__, self.value, self.position[0], self.position[1]
-                )
-        else:
-            return '%s "%s"' % (self.__class__.__name__, self.value)
+        return '%s' % (self.__class__.__name__)
 
     def __str__(self):
         return repr(self)

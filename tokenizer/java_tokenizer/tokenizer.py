@@ -14,12 +14,14 @@ class JavaToken(object):
         self.javadoc = javadoc
 
     def __repr__(self):
-        if self.position:
-            return '%s "%s" line %d, position %d' % (
-                self.__class__.__name__, self.value, self.position[0], self.position[1]
-                )
+        if(self.__class__.__name__== 'Ident'):
+            return '%s' % (self.__class__.__name__)
+
+        elif(self.__class__.__name__ in ["Integer","DecimalInteger","OctalInteger","HexInteger","BinaryInteger","FloatingPoint","DecimalFloatingPoint","HexFloatingPoint"]):
+            return "Literal"
+
         else:
-            return '%s "%s"' % (self.__class__.__name__, self.value)
+            return '%s' % (self.value)
 
     def __str__(self):
         return repr(self)
@@ -136,7 +138,7 @@ class Operator(JavaToken):
 class Annotation(JavaToken):
     pass
 
-class Identifier(JavaToken):
+class Ident(JavaToken):
     pass
 
 
@@ -433,7 +435,7 @@ class JavaTokenizer(object):
         elif ident == 'null':
             token_type = Null
         else:
-            token_type = Identifier
+            token_type = Ident
 
         return token_type
 
@@ -576,10 +578,11 @@ class JavaTokenizer(object):
 
         if not char:
             char = self.data[self.j]
-
+            
         message = u'%s at "%s", line %s: %s' % (message, char, line_number, line)
 
         raise LexerError(message)
+
 
 def tokenize(code):
     tokenizer = JavaTokenizer(code)
@@ -616,7 +619,7 @@ def reformat_tokens(tokens):
         elif token.value == ',':
             output.append(', ')
 
-        elif isinstance(token, (Literal, Keyword, Identifier)):
+        elif isinstance(token, (Literal, Keyword, Ident)):
             if ident_last:
                 # If the last token was a literla/keyword/identifer put a space in between
                 output.append(' ')
@@ -633,7 +636,7 @@ def reformat_tokens(tokens):
         else:
             output.append(token.value)
 
-        ident_last = isinstance(token, (Literal, Keyword, Identifier))
+        ident_last = isinstance(token, (Literal, Keyword, Ident))
 
     if closed_block:
         output.append('\n}')
@@ -641,5 +644,6 @@ def reformat_tokens(tokens):
     output.append('\n')
 
     return ''.join(output)
+
 
 
